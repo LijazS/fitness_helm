@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "fitness-chart.fullname" . }}-fitness-tracker-app
+  name: fitness-tracker-app
   labels:
   {{- include "fitness-chart.labels" . | nindent 4 }}
 spec:
@@ -52,7 +52,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "fitness-chart.fullname" . }}-fitness-tracker-service
+  name: fitness-tracker-service
   labels:
   {{- include "fitness-chart.labels" . | nindent 4 }}
 spec:

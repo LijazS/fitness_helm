@@ -47,7 +47,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "fitness-chart.fullname" . }}-mongodb-service
+  name: mongodb-service
   labels:
   {{- include "fitness-chart.labels" . | nindent 4 }}
 spec:

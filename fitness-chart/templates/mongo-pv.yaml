@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ include "fitness-chart.fullname" . }}-mongo-pv
+  name: mongo-pv
   labels:
     app: fitness
   {{- include "fitness-chart.labels" . | nindent 4 }}
