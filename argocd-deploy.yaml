@@ -9,9 +9,6 @@ spec:
     repoURL: https://github.com/LijazS/fitness_helm.git
     targetRevision: main
     path: fitness-chart
-    helm:
-      valueFiles:
-        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: l-ns
