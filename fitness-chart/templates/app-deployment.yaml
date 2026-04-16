@@ -1,17 +1,11 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: fitness-tracker-app
   labels:
   {{- include "fitness-chart.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.fitnessTrackerApp.replicas }}
-  strategy:
-    rollingUpdate:
-      maxSurge: {{ .Values.fitnessTrackerApp.strategy.rollingUpdate.maxSurge }}
-      maxUnavailable: {{ .Values.fitnessTrackerApp.strategy.rollingUpdate.maxUnavailable
-        }}
-    type: {{ .Values.fitnessTrackerApp.strategy.type | quote }}
   selector:
     matchLabels:
       app: fitness-tracker-app
@@ -27,32 +21,57 @@ spec:
            {"source":"nodejs","service":"fitness-tracker-app"}]
     spec:
       containers:
-      - env:
-        - name: DD_AGENT_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
-        - name: KUBERNETES_CLUSTER_DOMAIN
-          value: {{ quote .Values.kubernetesClusterDomain }}
-        envFrom:
-        - configMapRef:
-            name: {{ include "fitness-chart.fullname" . }}-fitness-configmap
-        image: {{ .Values.fitnessTrackerApp.fitnessTrackerApp.image.repository }}:{{ .Values.fitnessTrackerApp.fitnessTrackerApp.image.tag
-          | default .Chart.AppVersion }}
-        name: fitness-tracker-app
-        ports:
-        - containerPort: 5000
-        resources: {}
-      nodeSelector: {{- toYaml .Values.fitnessTrackerApp.nodeSelector | nindent 8 }}
+        - name: fitness-tracker-app
+          image: {{ .Values.fitnessTrackerApp.fitnessTrackerApp.image.repository }}:{{ .Values.fitnessTrackerApp.fitnessTrackerApp.image.tag | default .Chart.AppVersion }}
+          ports:
+            - containerPort: 5000
+          env:
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: KUBERNETES_CLUSTER_DOMAIN
+              value: {{ quote .Values.kubernetesClusterDomain }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "fitness-chart.fullname" . }}-fitness-configmap
+          resources: {}
+      nodeSelector:
+        {{- toYaml .Values.fitnessTrackerApp.nodeSelector | nindent 8 }}
       serviceAccountName: {{ include "fitness-chart.serviceAccountName" . }}
-      tolerations: {{- toYaml .Values.fitnessTrackerApp.tolerations | nindent 8 }}
-      topologySpreadConstraints: {{- toYaml .Values.fitnessTrackerApp.topologySpreadConstraints
-        | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.fitnessTrackerApp.tolerations | nindent 8 }}
+      topologySpreadConstraints:
+        {{- toYaml .Values.fitnessTrackerApp.topologySpreadConstraints | nindent 8 }}
+
+  strategy:
+    blueGreen:
+      activeService: fitness-tracker-active-service
+      previewService: fitness-tracker-preview-service
+      autoPromotionEnabled: false
+      previewReplicaCount: 1
+      scaleDownDelaySeconds: 30
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: fitness-tracker-active-service
+  labels:
+  {{- include "fitness-chart.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.fitnessTrackerService.type }}
+  selector:
+    app: fitness-tracker-app
+    {{- include "fitness-chart.selectorLabels" . | nindent 4 }}
+  ports:
+  {{- .Values.fitnessTrackerService.ports | toYaml | nindent 2 }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: fitness-tracker-service
+  name: fitness-tracker-preview-service
   labels:
   {{- include "fitness-chart.labels" . | nindent 4 }}
 spec:

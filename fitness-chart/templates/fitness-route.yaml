@@ -6,13 +6,13 @@ metadata:
   {{- include "fitness-chart.labels" . | nindent 4 }}
 spec:
   parentRefs:
-  - name: sales-gateway
-    namespace: sales-gateway-ns
+    - name: sales-gateway
+      namespace: sales-gateway-ns
   rules:
-  - backendRefs:
-    - name: fitness-tracker-service
-      port: 80
-    matches:
-    - path:
-        type: PathPrefix
-        value: /
+    - backendRefs:
+        - name: fitness-tracker-active-service
+          port: 80
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
