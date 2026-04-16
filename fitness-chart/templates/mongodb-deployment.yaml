@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fitness-chart.fullname" . }}-mongodb
+  labels:
+  {{- include "fitness-chart.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.mongodb.replicas }}
+  strategy:
+    rollingUpdate:
+      maxSurge: {{ .Values.mongodb.strategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.mongodb.strategy.rollingUpdate.maxUnavailable }}
+    type: {{ .Values.mongodb.strategy.type | quote }}
+  selector:
+    matchLabels:
+      app: mongodb
+    {{- include "fitness-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: mongodb
+      {{- include "fitness-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.mongodb.mongodb.image.repository }}:{{ .Values.mongodb.mongodb.image.tag
+          | default .Chart.AppVersion }}
+        name: mongodb
+        ports:
+        - containerPort: 27017
+        resources: {{- toYaml .Values.mongodb.mongodb.resources | nindent 10 }}
+        volumeMounts:
+        - mountPath: /data/db
+          name: mongodb-storage
+      nodeSelector: {{- toYaml .Values.mongodb.nodeSelector | nindent 8 }}
+      serviceAccountName: {{ include "fitness-chart.serviceAccountName" . }}
+      tolerations: {{- toYaml .Values.mongodb.tolerations | nindent 8 }}
+      topologySpreadConstraints: {{- toYaml .Values.mongodb.topologySpreadConstraints |
+        nindent 8 }}
+      volumes:
+      - emptyDir:
+          sizeLimit: 500Mi
+        name: mongodb-storage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fitness-chart.fullname" . }}-mongodb-service
+  labels:
+  {{- include "fitness-chart.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.mongodbService.type }}
+  selector:
+    app: mongodb
+    {{- include "fitness-chart.selectorLabels" . | nindent 4 }}
+  ports:
+  {{- .Values.mongodbService.ports | toYaml | nindent 2 }}

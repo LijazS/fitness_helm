@@ -1,0 +1,62 @@
+fitnessConfigmap:
+  ddEnv: production
+  ddService: fitness-tracker-app
+  ddTraceAgentPort: "8126"
+  ddVersion: 1.0.0
+  host: 0.0.0.0
+  mongodbUri: mongodb://mongodb-service:27017/fitness-tracker
+  nodeEnv: production
+  port: "5000"
+fitnessTrackerApp:
+  fitnessTrackerApp:
+    image:
+      repository: pulkit197/fitness_tracker-master-copy3-fitness-app
+      tag: latest
+  nodeSelector: {}
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  tolerations:
+  - effect: NoSchedule
+    key: app
+    operator: Equal
+    value: myapp
+  topologySpreadConstraints: []
+fitnessTrackerService:
+  ports:
+  - port: 80
+    targetPort: 5000
+  type: ClusterIP
+kubernetesClusterDomain: cluster.local
+mongodb:
+  mongodb:
+    image:
+      repository: mongo
+      tag: 7-jammy
+    resources:
+      limits:
+        cpu: 200m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  nodeSelector: {}
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  tolerations: []
+  topologySpreadConstraints: []
+mongodbService:
+  ports:
+  - port: 27017
+    targetPort: 27017
+  type: ClusterIP
+pvc:
+  fitnessPvc:
+    storageRequest: 8Gi
